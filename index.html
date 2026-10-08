@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saloon Safe Cracker - Authentic Western Edition</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(rgba(15, 7, 3, 0.75), rgba(15, 7, 3, 0.85)), url('holl.avif') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+            color: #f4e8c1;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            height: 640px;
+            background: rgba(30, 16, 8, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), inset 0 0 40px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 18px;
+            border: 5px solid #3d2314;
+        }
+
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(20, 10, 5, 0.95);
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 2px solid #6b4423;
+            z-index: 10;
+            width: 100%;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+        }
+        .hud-box {
+            font-size: 14px;
+            font-weight: bold;
+            color: #d4af37;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .hud-box span {
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .stage-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 5px;
+        }
+        .stage-dot {
+            font-size: 10px;
+            padding: 4px 8px;
+            background: #1f1109;
+            border: 1px solid #4a2e18;
+            border-radius: 12px;
+            color: #8c5830;
+            font-weight: bold;
+            text-align: center;
+        }
+        .stage-dot.active {
+            background: #d4af37;
+            color: #1f1109;
+            border-color: #ffea87;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+        }
+
+        .center-screen {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            perspective: 1200px;
+        }
+
+        /* ტეხასური სეიფის კონტეინერი */
+        .safe-box {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            background: radial-gradient(circle, #2b180e 0%, #110804 100%);
+            border: 12px solid #2a160b;
+            border-radius: 14px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.95), inset 0 0 30px rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* სეიფის შიგთავსი (ოქროები და ძვირფასეულობა) */
+        .safe-interior {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #080301;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.98);
+        }
+
+        .inside-gold {
+            font-size: 32px;
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
+        }
+
+        /* სეიფის მძიმე რკინის კარი ტეხასური მოჭედილობით და მოქლონებით */
+        .safe-door {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #5c3a21 0%, #2b170c 100%);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            transform-origin: left center;
+            transition: transform 1.6s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 8px 0 25px rgba(0,0,0,0.85);
+            border: 4px solid #7a4f2e;
+            /* მოქლონები კუთხეებში */
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.7), 8px 0 25px rgba(0,0,0,0.85);
+        }
+
+        /* ვიზუალური მოქლონები კარზე */
+        .safe-door::before, .safe-door::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #1a0e07;
+            border: 1px solid #d4af37;
+            border-radius: 50%;
+        }
+        .safe-door::before { top: 8px; left: 8px; box-shadow: 0 174px 0 #1a0e07; }
+        .safe-door::after { top: 8px; right: 8px; box-shadow: 0 174px 0 #1a0e07; }
+
+        /* რევოლვერის ტიპის მექანიკური ბორბალი */
+        .safe-wheel {
+            width: 78px;
+            height: 78px;
+            background: linear-gradient(135deg, #333333, #0a0a0a);
+            border: 6px solid #6b4423;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.9), inset 0 0 8px rgba(255,255,255,0.1);
+            transition: transform 1.8s cubic-bezier(0.15, 1, 0.15, 1);
+        }
+
+        .wheel-handle {
+            position: absolute;
+            width: 8px;
+            height: 66px;
+            background: linear-gradient(to bottom, #b5825a, #4a2c16);
+            border-radius: 4px;
+        }
+        .wheel-handle:nth-child(2) {
+            transform: rotate(90deg);
+        }
+
+        .safe-pin {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #d4af37;
+            border-radius: 50%;
+            z-index: 4;
+            box-shadow: 0 0 8px #d4af37;
+            border: 2px solid #2b170c;
+        }
+
+        /* ანიმაციის კლასები რეალისტური გამოწევა-გაღებისთვის */
+        .safe-door.opening-step-1 {
+            transform: translateZ(25px) rotateY(-15deg);
+        }
+        .safe-door.opening-step-2 {
+            transform: translateZ(25px) rotateY(-115deg);
+        }
+
+        .status-text {
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            margin-top: 12px;
+            background: rgba(20, 10, 5, 0.9);
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid #6b4423;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        .control-panel {
+            background: rgba(20, 10, 5, 0.95);
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 2px solid #6b4423;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bet-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+        }
+        .bet-input-group label {
+            font-size: 11px;
+            color: #d4af37;
+        }
+
+        .bet-controls-wrapper {
+            display: flex;
+            align-items: center;
+            background: #110804;
+            border: 1px solid #6b4423;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .bet-btn {
+            background: #3d2314;
+            border: none;
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 6px 14px;
+            cursor: pointer;
+        }
+        .bet-btn:active {
+            background: #5c3a21;
+        }
+
+        .bet-input-group input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 6px 0;
+            font-size: 16px;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        .actions-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+            transition: 0.2s;
+            background: linear-gradient(135deg, #d4af37, #997a15);
+            color: #1f1109;
+            border: 1px solid #ffea87;
+        }
+        .action-btn:hover { filter: brightness(1.15); }
+        .action-btn:active { transform: scale(0.98); }
+        .action-btn:disabled {
+            background: #2a160b;
+            color: #614637;
+            border-color: #3d2314;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .cashout-btn {
+            background: linear-gradient(135deg, #27ae60, #1e8449);
+            color: #fff;
+            border: 1px solid #2ecc71;
+            display: none;
+        }
+
+        @keyframes vault-shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            25% { transform: translate(-3px, 1px) rotate(-1deg); }
+            50% { transform: translate(2px, -2px) rotate(1deg); }
+            75% { transform: translate(-1px, -2px) rotate(0deg); }
+            100% { transform: translate(3px, 2px) rotate(-1deg); }
+        }
+        .shaking {
+            animation: vault-shake 0.12s infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <div class="top-panel">
+        <div class="hud-box">ბალანსი: <span id="balance">1000.00</span> ₾</div>
+        <div class="hud-box" style="color: #ffd700;">მოგება: <span id="current-win">0.00</span> ₾</div>
+    </div>
+
+    <div class="stage-indicator">
+        <div class="stage-dot active" id="dot-1">ეტაპი 1<br>(1.2x - 2.5x)</div>
+        <div class="stage-dot" id="dot-2">ეტაპი 2<br>(3.0x - 10.0x)</div>
+        <div class="stage-dot" id="dot-3">ეტაპი 3<br>(12.0x - 75.0x)</div>
+    </div>
+
+    <div class="center-screen">
+        <div class="safe-box" id="safe-box">
+            <div class="safe-interior">
+                <div style="font-size: 11px; color: #a3704c; margin-bottom: 5px;" id="interior-label">შედეგი:</div>
+                <div class="inside-gold" id="inside-result">🔐</div>
+            </div>
+
+            <div class="safe-door" id="safe-door">
+                <div class="safe-wheel" id="wheel">
+                    <div class="wheel-handle"></div>
+                    <div class="wheel-handle"></div>
+                    <div class="safe-pin"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-text" id="status-msg">მოიმარჯვე ნებისყოფა და გახსენი სალუნის სეიფი!</div>
+    </div>
+
+    <div class="control-panel">
+        <div class="control-row" id="bet-row">
+            <div class="bet-input-group">
+                <label>ფსონი (1 - 50 ₾)</label>
+                <div class="bet-controls-wrapper">
+                    <button class="bet-btn" onclick="changeBet(-1)">-</button>
+                    <input type="number" id="bet-amount" value="10" min="1" max="50">
+                    <button class="bet-btn" onclick="changeBet(1)">+</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="actions-group">
+            <button class="action-btn cashout-btn" id="cashout-btn" onclick="cashOut()">თანხის მოხსნა</button>
+            <button class="action-btn" id="open-btn" onclick="openSafe()">სეიფის გახსნა</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let balance = 1000;
+    let currentBet = 10;
+    let gameStage = 1;
+    let accumulatedWin = 0;
+    let isOpening = false;
+
+    const balanceEl = document.getElementById('balance');
+    const currentWinEl = document.getElementById('current-win');
+    const statusMsgEl = document.getElementById('status-msg');
+    const openBtn = document.getElementById('open-btn');
+    const cashoutBtn = document.getElementById('cashout-btn');
+    const betInput = document.getElementById('bet-amount');
+    const betRow = document.getElementById('bet-row');
+    const safeDoorEl = document.getElementById('safe-door');
+    const safeBoxEl = document.getElementById('safe-box');
+    const wheelEl = document.getElementById('wheel');
+    const insideResultEl = document.getElementById('inside-result');
+    const interiorLabel = document.getElementById('interior-label');
+
+    const dot1 = document.getElementById('dot-1');
+    const dot2 = document.getElementById('dot-2');
+    const dot3 = document.getElementById('dot-3');
+
+    function changeBet(amount) {
+        if (isOpening || gameStage > 1) return;
+        let val = parseInt(betInput.value) || 1;
+        val += amount;
+        if (val < 1) val = 1;
+        if (val > 50) val = 50;
+        betInput.value = val;
+    }
+
+    function updateStageUI() {
+        dot1.classList.remove('active');
+        dot2.classList.remove('active');
+        dot3.classList.remove('active');
+
+        if (gameStage === 1) dot1.classList.add('active');
+        if (gameStage === 2) dot2.classList.add('active');
+        if (gameStage === 3) dot3.classList.add('active');
+    }
+
+    function openSafe() {
+        if (isOpening) return;
+
+        if (gameStage === 1) {
+            currentBet = parseFloat(betInput.value);
+            if (isNaN(currentBet) || currentBet < 1 || currentBet > 50) {
+                alert("ფსონი უნდა იყოს 1-დან 50 ლარამდე!");
+                return;
+            }
+            if (currentBet > balance) {
+                alert("არასაკმარისი ბალანსი!");
+                return;
+            }
+
+            balance -= currentBet;
+            balanceEl.innerText = balance.toFixed(2);
+            accumulatedWin = 0;
+        }
+
+        isOpening = true;
+        openBtn.disabled = true;
+        betInput.disabled = true;
+        cashoutBtn.style.display = 'none';
+
+        // საწყისი მდგომარეობა (დახურული)
+        safeDoorEl.classList.remove('opening-step-1', 'opening-step-2');
+        safeBoxEl.classList.remove('shaking');
+        insideResultEl.innerText = "⚙️";
+        interiorLabel.innerText = `ეტაპი ${gameStage} ირევა...`;
+        statusMsgEl.innerText = `ეტაპი ${gameStage}: სეიფის კოდი იკრიფება...`;
+
+        // 1. ბორბლის ტრიალი და სეიფის კანკალი (მექანიკური ძალისხმევა)
+        setTimeout(() => {
+            safeBoxEl.classList.add('shaking');
+            let randomDeg = 1440 + Math.floor(Math.random() * 1080);
+            wheelEl.style.transform = `rotate(${randomDeg}deg)`;
+        }, 100);
+
+        let outcomeMultiplier = getHighMultiplierCasinoLogic(gameStage);
+
+        // 2. ურდულების მოხსნა — კარი წინ მოიწევს (Step 1)
+        setTimeout(() => {
+            safeBoxEl.classList.remove('shaking');
+            safeDoorEl.classList.add('opening-step-1');
+            statusMsgEl.innerText = `ურდულები მოიხსნა! კარი იღება...`;
+        }, 1700);
+
+        // 3. სეიფის კარის სრულად გაღება და შედეგის გამოჩენა (Step 2)
+        setTimeout(() => {
+            safeDoorEl.classList.remove('opening-step-1');
+            safeDoorEl.classList.add('opening-step-2');
+
+            insideResultEl.innerText = outcomeMultiplier.toFixed(2) + "x";
+
+            // წაგება (< 1.0x)
+            if (outcomeMultiplier < 1.0) {
+                interiorLabel.innerText = "ცარიელია!";
+                if (outcomeMultiplier === 0) {
+                    statusMsgEl.innerText = `💥 სეიფი ცარიელი აღმოჩნდა (0.0x)! ფსონი დაკარგულია.`;
+                } else {
+                    statusMsgEl.innerText = `⚠️ მულტიპლიკატორია ${outcomeMultiplier.toFixed(2)}x. ეტაპი ჩაჭრილია!`;
+                }
+
+                insideResultEl.style.color = "#ff4444";
+                currentWinEl.innerText = "0.00";
+                resetGameSession();
+                return;
+            }
+
+            let stageWin = currentBet * outcomeMultiplier;
+            accumulatedWin += stageWin;
+            currentWinEl.innerText = accumulatedWin.toFixed(2);
+
+            if (gameStage < 3) {
+                interiorLabel.innerText = "ოქროა!";
+                statusMsgEl.innerText = `🎉 ეტაპი ${gameStage} დაიხურა (${outcomeMultiplier.toFixed(2)}x)! გარისკავ შემდეგზე თუ გაიტან?`;
+                
+                openBtn.innerText = `გაგრძელება (ეტაპი ${gameStage + 1})`;
+                cashoutBtn.style.display = 'block';
+                isOpening = false;
+                openBtn.disabled = false;
+                gameStage++;
+                updateStageUI();
+            } else {
+                balance += accumulatedWin;
+                balanceEl.innerText = balance.toFixed(2);
+                interiorLabel.innerText = "JACKPOT!";
+                statusMsgEl.innerText = `🏆 სალუნის მთავარი ჯეკპოტი! შენ მოიგე ფანტასტიკური თანხა: ${accumulatedWin.toFixed(2)} ₾!`;
+                insideResultEl.style.color = "#00ffaa";
+                
+                resetGameSession();
+            }
+
+        }, 2500);
+    }
+
+    function cashOut() {
+        if (isOpening) return;
+        balance += accumulatedWin;
+        balanceEl.innerText = balance.toFixed(2);
+        statusMsgEl.innerText = `💰 წარმატებით გამოიტანე მყარი ${accumulatedWin.toFixed(2)} ₾!`;
+        resetGameSession();
+    }
+
+    function resetGameSession() {
+        gameStage = 1;
+        accumulatedWin = 0;
+        isOpening = false;
+        openBtn.disabled = false;
+        betInput.disabled = false;
+        openBtn.innerText = "სეიფის გახსნა";
+        cashoutBtn.style.display = 'none';
+        betRow.style.display = 'flex';
+        updateStageUI();
+    }
+
+    function getHighMultiplierCasinoLogic(stage) {
+        let rand = Math.random();
+
+        if (stage === 1) {
+            if (rand < 0.60) {
+                return Math.random() < 0.8 ? 0.0 : (0.4 + Math.random() * 0.5);
+            }
+            return 1.2 + Math.random() * 1.3; 
+        } 
+        else if (stage === 2) {
+            if (rand < 0.78) {
+                return Math.random() < 0.85 ? 0.0 : (0.5 + Math.random() * 0.4);
+            }
+            return 3.0 + Math.random() * 7.0; 
+        } 
+        else {
+            if (rand < 0.89) {
+                return Math.random() < 0.9 ? 0.0 : (0.6 + Math.random() * 0.3);
+            }
+            return 12.0 + Math.random() * 63.0; 
+        }
+    }
+</script>
+
+</body>
+</html>
